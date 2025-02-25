@@ -23,17 +23,19 @@ import InteractiveAvatarTextInput from "./InteractiveAvatarTextInput";
 import { AVATARS, STT_LANGUAGE_LIST } from "@/app/lib/constants";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Configura o cliente do Gemini
-const genAI = new GoogleGenerativeAI("");
-const model = genAI.getGenerativeModel({
-  model: "learnlm-1.5-pro-experimental",
-  systemInstruction:
-    'Você é um tutor virtual que irá conduzir uma situação de aprendizagem passo a passo com o aluno, de modo que avalie gradualmente o progresso do aluno. Invcentive o aluno a continuar na atividade para alcançar o objetivo. Inicie se apresentando e perguntando se o aluno esta pronto, posteriormente apresente a situação de aprendizagem a seguir:\nContextualização:\nA "TechSolutions," uma empresa de pequeno porte com 20 funcionários e 5 anos de experiência, é especializada no desenvolvimento de software sob medida para otimizar processos de pequenas e médias empresas.\n\nA TechSolutions tem como clientes empresas dos setores de varejo, serviços e indústria. Ela oferece soluções como sistemas de gestão de estoque, CRM e ferramentas de automação de marketing. A empresa valoriza o contato próximo com o cliente e a personalização das soluções, buscando sempre atender às necessidades específicas de cada negócio.\n\nRecentemente, a TechSolutions foi contratada pela "Alimentos Delícia," uma indústria alimentícia local que busca modernizar seu sistema de controle de produção. Para dar início ao projeto, a equipe precisa realizar um levantamento detalhado dos requisitos do cliente, buscando entender suas necessidades, expectativas e restrições. A empresa utiliza um sistema legado com pouca escalabilidade e funcionalidades limitadas. A Alimentos Delícia busca aumentar sua eficiência produtiva, reduzir desperdícios e ter maior controle sobre todo o processo, desde a entrada da matéria-prima até a expedição do produto final.\n\nVisando preparar os alunos, o plano de ensino da unidade curricular “Levantamento de Requisitos” sugere a necessidade de inclusão de figuras, esquemas, desenhos, leiautes, formulários, etc, para complementar a situação de aprendizagem e descrever qual imagem deve ser incluída.\n\nDesafio:\nConsiderando o cenário apresentado, você e sua equipe, como consultores da TechSolutions, foram designados para conduzir uma entrevista de levantamento de requisitos com o gerente de produção da Alimentos Delícia, Sr. João. O objetivo é coletar informações detalhadas sobre os processos atuais, identificar os principais problemas e necessidades e definir os requisitos para o novo sistema de controle de produção.\n\nPara isso, você deverá:\n\nElaborar um roteiro de entrevista estruturado, com perguntas claras e objetivas que abordem os processos de produção, os dados coletados, os sistemas utilizados, as dificuldades encontradas e as expectativas em relação ao novo sistema.\nAplicar técnicas de comunicação eficazes durante a entrevista, como escuta ativa, perguntas abertas e fechadas e feedback constante, buscando obter o máximo de informações relevantes.\nUtilizar metodologias ágeis, como Scrum e Kanban, para organizar as tarefas e priorizar os requisitos levantados.\nAplicar os princípios do Design Thinking, buscando entender a fundo as necessidades do cliente e gerar soluções inovadoras e centradas no usuário.\nResultados Esperados:\nAo final desta situação de aprendizagem, espera-se que você e sua equipe sejam capazes de:\n\nElaborar um roteiro de entrevista claro, estruturado e completo, que aborde todos os aspectos relevantes para o levantamento de requisitos.\nConduzir uma entrevista de levantamento de requisitos de forma profissional e eficaz, obtendo informações precisas e relevantes para o projeto.\nIdentificar os principais problemas e necessidades do cliente, traduzindo-os em requisitos funcionais e não funcionais claros e mensuráveis.\nAplicar metodologias ágeis e os princípios do Design Thinking para organizar, priorizar e validar os requisitos levantados.\nApresentar um relatório final completo e detalhado, com todos os requisitos levantados, priorizados e validados, que servirá como base para o desenvolvimento do novo sistema de controle de produção.\nApresentar o protótipo do Briefing preenchido que será entregue ao cliente.',
-});
+// // Configura o cliente do Gemini
+// const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+// console.log(genAI);
+// const model = genAI.getGenerativeModel({
+//   model: "learnlm-1.5-pro-experimental",
+//   systemInstruction:
+//     'Você é um tutor virtual que irá conduzir uma situação de aprendizagem passo a passo com o aluno, de modo que avalie gradualmente o progresso do aluno. Invcentive o aluno a continuar na atividade para alcançar o objetivo. Inicie se apresentando e perguntando se o aluno esta pronto, posteriormente apresente a situação de aprendizagem a seguir:\nContextualização:\nA "TechSolutions," uma empresa de pequeno porte com 20 funcionários e 5 anos de experiência, é especializada no desenvolvimento de software sob medida para otimizar processos de pequenas e médias empresas.\n\nA TechSolutions tem como clientes empresas dos setores de varejo, serviços e indústria. Ela oferece soluções como sistemas de gestão de estoque, CRM e ferramentas de automação de marketing. A empresa valoriza o contato próximo com o cliente e a personalização das soluções, buscando sempre atender às necessidades específicas de cada negócio.\n\nRecentemente, a TechSolutions foi contratada pela "Alimentos Delícia," uma indústria alimentícia local que busca modernizar seu sistema de controle de produção. Para dar início ao projeto, a equipe precisa realizar um levantamento detalhado dos requisitos do cliente, buscando entender suas necessidades, expectativas e restrições. A empresa utiliza um sistema legado com pouca escalabilidade e funcionalidades limitadas. A Alimentos Delícia busca aumentar sua eficiência produtiva, reduzir desperdícios e ter maior controle sobre todo o processo, desde a entrada da matéria-prima até a expedição do produto final.\n\nVisando preparar os alunos, o plano de ensino da unidade curricular “Levantamento de Requisitos” sugere a necessidade de inclusão de figuras, esquemas, desenhos, leiautes, formulários, etc, para complementar a situação de aprendizagem e descrever qual imagem deve ser incluída.\n\nDesafio:\nConsiderando o cenário apresentado, você e sua equipe, como consultores da TechSolutions, foram designados para conduzir uma entrevista de levantamento de requisitos com o gerente de produção da Alimentos Delícia, Sr. João. O objetivo é coletar informações detalhadas sobre os processos atuais, identificar os principais problemas e necessidades e definir os requisitos para o novo sistema de controle de produção.\n\nPara isso, você deverá:\n\nElaborar um roteiro de entrevista estruturado, com perguntas claras e objetivas que abordem os processos de produção, os dados coletados, os sistemas utilizados, as dificuldades encontradas e as expectativas em relação ao novo sistema.\nAplicar técnicas de comunicação eficazes durante a entrevista, como escuta ativa, perguntas abertas e fechadas e feedback constante, buscando obter o máximo de informações relevantes.\nUtilizar metodologias ágeis, como Scrum e Kanban, para organizar as tarefas e priorizar os requisitos levantados.\nAplicar os princípios do Design Thinking, buscando entender a fundo as necessidades do cliente e gerar soluções inovadoras e centradas no usuário.\nResultados Esperados:\nAo final desta situação de aprendizagem, espera-se que você e sua equipe sejam capazes de:\n\nElaborar um roteiro de entrevista claro, estruturado e completo, que aborde todos os aspectos relevantes para o levantamento de requisitos.\nConduzir uma entrevista de levantamento de requisitos de forma profissional e eficaz, obtendo informações precisas e relevantes para o projeto.\nIdentificar os principais problemas e necessidades do cliente, traduzindo-os em requisitos funcionais e não funcionais claros e mensuráveis.\nAplicar metodologias ágeis e os princípios do Design Thinking para organizar, priorizar e validar os requisitos levantados.\nApresentar um relatório final completo e detalhado, com todos os requisitos levantados, priorizados e validados, que servirá como base para o desenvolvimento do novo sistema de controle de produção.\nApresentar o protótipo do Briefing preenchido que será entregue ao cliente.',
+// });
 
 export default function InteractiveAvatar() {
   const [heygenApiKey, setHeygenApiKey] = useState<string>("");
   const [geminiApiKey, setGeminiApiKey] = useState<string>("");
+  const [genAI, setGenAI] = useState<GoogleGenerativeAI | null>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingRepeat, setIsLoadingRepeat] = useState(false);
   const [stream, setStream] = useState<MediaStream>();
@@ -50,9 +52,26 @@ export default function InteractiveAvatar() {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
 
-  
+  // Atualiza o cliente Gemini sempre que a chave da API mudar
+  useEffect(() => {
+    if (geminiApiKey) {
+      const newGenAI = new GoogleGenerativeAI(geminiApiKey);
+      setGenAI(newGenAI);
+    } else {
+      setGenAI(null);
+    }
+  }, [geminiApiKey]);
 
+  // Função para enviar mensagem ao Gemini
   async function sendToGemini(input: string): Promise<string> {
+    if (!genAI) {
+      throw new Error("Gemini API Key não configurada.");
+    }
+
+    const model = genAI.getGenerativeModel({
+      model: "learnlm-1.5-pro-experimental",
+    });
+
     const chatSession = model.startChat({
       generationConfig: {
         temperature: 1,
