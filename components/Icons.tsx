@@ -1,5 +1,5 @@
-export function HeyGenLogo() {
-  return <img src="/heygen-logo.png" className="h-8" alt="HeyGen Logo" />;
+export function SENAILogo() {
+  return <img alt="SENAI SP Logo" className="h-8" src="https://upload.wikimedia.org/wikipedia/commons/8/8c/SENAI_S%C3%A3o_Paulo_logo.png" />;
 }
 
 type IconSvgProps = {
