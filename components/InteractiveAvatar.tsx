@@ -35,7 +35,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export default function InteractiveAvatar() {
   const [heygenApiKey, setHeygenApiKey] = useState<string>("");
   const [geminiApiKey, setGeminiApiKey] = useState<string>("");
-  const [genAI, setGenAI] = useState<GoogleGenerativeAI | null>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingRepeat, setIsLoadingRepeat] = useState(false);
   const [stream, setStream] = useState<MediaStream>();
@@ -52,23 +51,33 @@ export default function InteractiveAvatar() {
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
 
-  // Atualiza o cliente Gemini sempre que a chave da API mudar
-  useEffect(() => {
-    if (geminiApiKey) {
-      const newGenAI = new GoogleGenerativeAI(geminiApiKey);
-      setGenAI(newGenAI);
-    } else {
-      setGenAI(null);
+  // Usamos useRef para armazenar o cliente Gemini
+  const genAIRef = useRef<GoogleGenerativeAI | null>(null);
+
+  // Função para configurar o cliente Gemini
+  const setupGeminiClient = () => {
+    alert("Chave da API do Gemini:" + geminiApiKey);
+    if (!geminiApiKey) {
+      alert("Por favor, insira uma chave de API válida.");
+      return false;
     }
-  }, [geminiApiKey]);
+
+    // Cria o cliente Gemini apenas se ainda não foi criado
+    if (!genAIRef.current) {
+      genAIRef.current = new GoogleGenerativeAI(geminiApiKey);
+      console.log("Cliente Gemini configurado com sucesso!");
+    }
+
+    return true;
+  };
 
   // Função para enviar mensagem ao Gemini
   async function sendToGemini(input: string): Promise<string> {
-    if (!genAI) {
+    if (!genAIRef.current) {
       throw new Error("Gemini API Key não configurada.");
     }
 
-    const model = genAI.getGenerativeModel({
+    const model = genAIRef.current.getGenerativeModel({
       model: "learnlm-1.5-pro-experimental",
     });
 
@@ -127,6 +136,9 @@ export default function InteractiveAvatar() {
         console.log("Transcribed text:", transcript);
 
         try {
+          if (!setupGeminiClient()) {
+            throw new Error("Gemini API Key não configurada.");
+          }
           const geminiResponse = await sendToGemini(transcript);
           await avatar.current?.speak({
             text: geminiResponse,
