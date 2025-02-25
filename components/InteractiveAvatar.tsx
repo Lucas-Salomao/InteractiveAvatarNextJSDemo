@@ -26,6 +26,8 @@ import InteractiveAvatarTextInput from "./InteractiveAvatarTextInput";
 import {AVATARS, STT_LANGUAGE_LIST} from "@/app/lib/constants";
 
 export default function InteractiveAvatar() {
+  const [heygenApiKey, setHeygenApiKey] = useState<string>("");
+  const [geminiApiKey, setGeminiApiKey] = useState<string>("");
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingRepeat, setIsLoadingRepeat] = useState(false);
   const [stream, setStream] = useState<MediaStream>();
@@ -45,17 +47,26 @@ export default function InteractiveAvatar() {
     try {
       const response = await fetch("/api/get-access-token", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ apiKey: heygenApiKey }), // Envia a chave de API do HeyGen
       });
-      const token = await response.text();
-
-      console.log("Access Token:", token); // Log the token to verify
-
+  
+      if (!response.ok) {
+        throw new Error("Failed to fetch access token");
+      }
+  
+      const data = await response.json();
+      const token = data.token;
+  
+      console.log("Access Token:", token); // Log do token para verificação
       return token;
     } catch (error) {
       console.error("Error fetching access token:", error);
+      setDebug("Failed to fetch access token");
+      return "";
     }
-
-    return "";
   }
 
   async function startSession() {
@@ -79,17 +90,17 @@ export default function InteractiveAvatar() {
       console.log(">>>>> Stream ready:", event.detail);
       setStream(event.detail);
     });
-    avatar.current?.on(StreamingEvents.USER_START, (event) => {
-      console.log(">>>>> User started talking:", event);
-      setIsUserTalking(true);
-    });
-    avatar.current?.on(StreamingEvents.USER_STOP, (event) => {
-      console.log(">>>>> User stopped talking:", event);
-      setIsUserTalking(false);
-    });
+    // avatar.current?.on(StreamingEvents.USER_START, (event) => {
+    //   console.log(">>>>> User started talking:", event);
+    //   setIsUserTalking(true);
+    // });
+    // avatar.current?.on(StreamingEvents.USER_STOP, (event) => {
+    //   console.log(">>>>> User stopped talking:", event);
+    //   setIsUserTalking(false);
+    // });
     try {
       const res = await avatar.current.createStartAvatar({
-        quality: AvatarQuality.Low,
+        quality: AvatarQuality.High,
         avatarName: avatarId,
         knowledgeId: knowledgeId, // Or use a custom `knowledgeBase`.
         voice: {
@@ -108,10 +119,11 @@ export default function InteractiveAvatar() {
 
       setData(res);
       // default to voice mode
-      await avatar.current?.startVoiceChat({
-        useSilencePrompt: false
-      });
-      setChatMode("voice_mode");
+      // await avatar.current?.startVoiceChat({
+      //   useSilencePrompt: false
+      // });
+      // setChatMode("voice_mode");
+      setChatMode("voice_mode"); // Define o modo como voice_mode
     } catch (error) {
       console.error("Error starting avatar session:", error);
     } finally {
@@ -210,7 +222,7 @@ export default function InteractiveAvatar() {
                   variant="shadow"
                   onClick={handleInterrupt}
                 >
-                  Interrupt task
+                  Interromper fala
                 </Button>
                 <Button
                   className="bg-gradient-to-tr from-indigo-500 to-indigo-300  text-white rounded-lg"
@@ -218,31 +230,49 @@ export default function InteractiveAvatar() {
                   variant="shadow"
                   onClick={endSession}
                 >
-                  End session
+                  Finalizar
                 </Button>
               </div>
             </div>
           ) : !isLoadingSession ? (
             <div className="h-full justify-center items-center flex flex-col gap-8 w-[500px] self-center">
               <div className="flex flex-col gap-2 w-full">
-                <p className="text-sm font-medium leading-none">
+                {/* <p className="text-sm font-medium leading-none">
                   Custom Knowledge ID (optional)
                 </p>
                 <Input
                   placeholder="Enter a custom knowledge ID"
                   value={knowledgeId}
                   onChange={(e) => setKnowledgeId(e.target.value)}
-                />
+                /> */}
+                {/* Campo para a chave de API do HeyGen */}
                 <p className="text-sm font-medium leading-none">
-                  Custom Avatar ID (optional)
+                  Chave de API do HeyGen
                 </p>
                 <Input
+                  placeholder="Insira sua chave de API do HeyGen"
+                  value={heygenApiKey}
+                  onChange={(e) => setHeygenApiKey(e.target.value)}
+                />
+                {/* Campo para a chave de API do Gemini */}
+                <p className="text-sm font-medium leading-none">
+                  Chave de API do Gemini
+                </p>
+                <Input
+                  placeholder="Insira sua chave de API do Gemini"
+                  value={geminiApiKey}
+                  onChange={(e) => setGeminiApiKey(e.target.value)}
+                />
+                <p className="text-sm font-medium leading-none">
+                  Avatar Personalizado
+                </p>
+                {/* <Input
                   placeholder="Enter a custom avatar ID"
                   value={avatarId}
                   onChange={(e) => setAvatarId(e.target.value)}
-                />
+                /> */}
                 <Select
-                  placeholder="Or select one from these example avatars"
+                  placeholder="Selecione um avatar de exemplo"
                   size="md"
                   onChange={(e) => {
                     setAvatarId(e.target.value);
@@ -258,8 +288,8 @@ export default function InteractiveAvatar() {
                   ))}
                 </Select>
                 <Select
-                  label="Select language"
-                  placeholder="Select language"
+                  label="Idioma"
+                  placeholder="Idioma"
                   className="max-w-xs"
                   selectedKeys={[language]}
                   onChange={(e) => {
@@ -274,12 +304,12 @@ export default function InteractiveAvatar() {
                 </Select>
               </div>
               <Button
-                className="bg-gradient-to-tr from-indigo-500 to-indigo-300 w-full text-white"
+                className="bg-gradient-to-tr from-red-500 to-red-900 w-full text-white"
                 size="md"
                 variant="shadow"
                 onClick={startSession}
               >
-                Start session
+                Iniciar
               </Button>
             </div>
           ) : (
@@ -295,8 +325,8 @@ export default function InteractiveAvatar() {
               handleChangeChatMode(v);
             }}
           >
-            <Tab key="text_mode" title="Text mode" />
-            <Tab key="voice_mode" title="Voice mode" />
+            {/* <Tab key="text_mode" title="Text mode" /> */}
+            <Tab key="voice_mode" title="Modo conversação" />
           </Tabs>
           {chatMode === "text_mode" ? (
             <div className="w-full flex relative">
@@ -310,25 +340,25 @@ export default function InteractiveAvatar() {
                 onSubmit={handleSpeak}
               />
               {text && (
-                <Chip className="absolute right-16 top-3">Listening</Chip>
+                <Chip className="absolute right-16 top-3">Escutando</Chip>
               )}
             </div>
           ) : (
             <div className="w-full text-center">
               <Button
                 isDisabled={!isUserTalking}
-                className="bg-gradient-to-tr from-indigo-500 to-indigo-300 text-white"
+                className="bg-gradient-to-tr from-red-500 to-red-900 text-white"
                 size="md"
                 variant="shadow"
               >
-                {isUserTalking ? "Listening" : "Voice chat"}
+                {isUserTalking ? "Escutando" : "Aperte para falar"}
               </Button>
             </div>
           )}
         </CardFooter>
       </Card>
       <p className="font-mono text-right">
-        <span className="font-bold">Console:</span>
+        <span className="font-bold">Mensagens de Sistema:</span>
         <br />
         {debug}
       </p>
