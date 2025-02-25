@@ -24,7 +24,7 @@ import { AVATARS, STT_LANGUAGE_LIST } from "@/app/lib/constants";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Configura o cliente do Gemini
-const genAI = new GoogleGenerativeAI("AIzaSyAjFWHEGTxz681t6D5nIOCE-FwWx3j1XQk");
+const genAI = new GoogleGenerativeAI("");
 const model = genAI.getGenerativeModel({
   model: "learnlm-1.5-pro-experimental",
   systemInstruction:
