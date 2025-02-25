@@ -1,5 +1,4 @@
 import type { StartAvatarResponse } from "@heygen/streaming-avatar";
-
 import StreamingAvatar, {
   AvatarQuality,
   StreamingEvents, TaskMode, TaskType, VoiceEmotion,
@@ -20,10 +19,17 @@ import {
 } from "@nextui-org/react";
 import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, usePrevious } from "ahooks";
-
 import InteractiveAvatarTextInput from "./InteractiveAvatarTextInput";
+import { AVATARS, STT_LANGUAGE_LIST } from "@/app/lib/constants";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import {AVATARS, STT_LANGUAGE_LIST} from "@/app/lib/constants";
+// Configura o cliente do Gemini
+const genAI = new GoogleGenerativeAI("AIzaSyAjFWHEGTxz681t6D5nIOCE-FwWx3j1XQk");
+const model = genAI.getGenerativeModel({
+  model: "learnlm-1.5-pro-experimental",
+  systemInstruction:
+    'Você é um tutor virtual que irá conduzir uma situação de aprendizagem passo a passo com o aluno, de modo que avalie gradualmente o progresso do aluno. Invcentive o aluno a continuar na atividade para alcançar o objetivo. Inicie se apresentando e perguntando se o aluno esta pronto, posteriormente apresente a situação de aprendizagem a seguir:\nContextualização:\nA "TechSolutions," uma empresa de pequeno porte com 20 funcionários e 5 anos de experiência, é especializada no desenvolvimento de software sob medida para otimizar processos de pequenas e médias empresas.\n\nA TechSolutions tem como clientes empresas dos setores de varejo, serviços e indústria. Ela oferece soluções como sistemas de gestão de estoque, CRM e ferramentas de automação de marketing. A empresa valoriza o contato próximo com o cliente e a personalização das soluções, buscando sempre atender às necessidades específicas de cada negócio.\n\nRecentemente, a TechSolutions foi contratada pela "Alimentos Delícia," uma indústria alimentícia local que busca modernizar seu sistema de controle de produção. Para dar início ao projeto, a equipe precisa realizar um levantamento detalhado dos requisitos do cliente, buscando entender suas necessidades, expectativas e restrições. A empresa utiliza um sistema legado com pouca escalabilidade e funcionalidades limitadas. A Alimentos Delícia busca aumentar sua eficiência produtiva, reduzir desperdícios e ter maior controle sobre todo o processo, desde a entrada da matéria-prima até a expedição do produto final.\n\nVisando preparar os alunos, o plano de ensino da unidade curricular “Levantamento de Requisitos” sugere a necessidade de inclusão de figuras, esquemas, desenhos, leiautes, formulários, etc, para complementar a situação de aprendizagem e descrever qual imagem deve ser incluída.\n\nDesafio:\nConsiderando o cenário apresentado, você e sua equipe, como consultores da TechSolutions, foram designados para conduzir uma entrevista de levantamento de requisitos com o gerente de produção da Alimentos Delícia, Sr. João. O objetivo é coletar informações detalhadas sobre os processos atuais, identificar os principais problemas e necessidades e definir os requisitos para o novo sistema de controle de produção.\n\nPara isso, você deverá:\n\nElaborar um roteiro de entrevista estruturado, com perguntas claras e objetivas que abordem os processos de produção, os dados coletados, os sistemas utilizados, as dificuldades encontradas e as expectativas em relação ao novo sistema.\nAplicar técnicas de comunicação eficazes durante a entrevista, como escuta ativa, perguntas abertas e fechadas e feedback constante, buscando obter o máximo de informações relevantes.\nUtilizar metodologias ágeis, como Scrum e Kanban, para organizar as tarefas e priorizar os requisitos levantados.\nAplicar os princípios do Design Thinking, buscando entender a fundo as necessidades do cliente e gerar soluções inovadoras e centradas no usuário.\nResultados Esperados:\nAo final desta situação de aprendizagem, espera-se que você e sua equipe sejam capazes de:\n\nElaborar um roteiro de entrevista claro, estruturado e completo, que aborde todos os aspectos relevantes para o levantamento de requisitos.\nConduzir uma entrevista de levantamento de requisitos de forma profissional e eficaz, obtendo informações precisas e relevantes para o projeto.\nIdentificar os principais problemas e necessidades do cliente, traduzindo-os em requisitos funcionais e não funcionais claros e mensuráveis.\nAplicar metodologias ágeis e os princípios do Design Thinking para organizar, priorizar e validar os requisitos levantados.\nApresentar um relatório final completo e detalhado, com todos os requisitos levantados, priorizados e validados, que servirá como base para o desenvolvimento do novo sistema de controle de produção.\nApresentar o protótipo do Briefing preenchido que será entregue ao cliente.',
+});
 
 export default function InteractiveAvatar() {
   const [heygenApiKey, setHeygenApiKey] = useState<string>("");
@@ -34,14 +40,33 @@ export default function InteractiveAvatar() {
   const [debug, setDebug] = useState<string>();
   const [knowledgeId, setKnowledgeId] = useState<string>("");
   const [avatarId, setAvatarId] = useState<string>("");
-  const [language, setLanguage] = useState<string>('en');
-
+  const [language, setLanguage] = useState<string>('pt');
   const [data, setData] = useState<StartAvatarResponse>();
   const [text, setText] = useState<string>("");
   const mediaStream = useRef<HTMLVideoElement>(null);
   const avatar = useRef<StreamingAvatar | null>(null);
   const [chatMode, setChatMode] = useState("text_mode");
   const [isUserTalking, setIsUserTalking] = useState(false);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [isListening, setIsListening] = useState(false);
+
+  
+
+  async function sendToGemini(input: string): Promise<string> {
+    const chatSession = model.startChat({
+      generationConfig: {
+        temperature: 1,
+        topP: 0.95,
+        topK: 64,
+        maxOutputTokens: 8192,
+        responseMimeType: "text/plain",
+      },
+      history: [],
+    });
+
+    const result = await chatSession.sendMessage(input);
+    return result.response.text();
+  }
 
   async function fetchAccessToken() {
     try {
@@ -52,14 +77,14 @@ export default function InteractiveAvatar() {
         },
         body: JSON.stringify({ apiKey: heygenApiKey }), // Envia a chave de API do HeyGen
       });
-  
+
       if (!response.ok) {
         throw new Error("Failed to fetch access token");
       }
-  
+
       const data = await response.json();
       const token = data.token;
-  
+
       console.log("Access Token:", token); // Log do token para verificação
       return token;
     } catch (error) {
@@ -69,8 +94,52 @@ export default function InteractiveAvatar() {
     }
   }
 
+  // Configura o Web Speech API
+  useEffect(() => {
+    if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = language;
+
+      recognitionInstance.onresult = async (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("Transcribed text:", transcript);
+
+        try {
+          const geminiResponse = await sendToGemini(transcript);
+          await avatar.current?.speak({
+            text: geminiResponse,
+            taskType: TaskType.REPEAT,
+            taskMode: TaskMode.SYNC,
+          });
+        } catch (error) {
+          console.error("Error communicating with Gemini:", error);
+          setDebug("Failed to communicate with Gemini");
+        }
+      };
+
+      recognitionInstance.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        setDebug("Speech recognition error");
+      };
+
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(recognitionInstance);
+    } else {
+      console.error("Web Speech API not supported");
+      setDebug("Web Speech API not supported");
+    }
+  }, [language]);
+
   async function startSession() {
     setIsLoadingSession(true);
+
+    // Usa a chave de API do HeyGen diretamente
     const newToken = await fetchAccessToken();
 
     avatar.current = new StreamingAvatar({
@@ -90,39 +159,21 @@ export default function InteractiveAvatar() {
       console.log(">>>>> Stream ready:", event.detail);
       setStream(event.detail);
     });
-    // avatar.current?.on(StreamingEvents.USER_START, (event) => {
-    //   console.log(">>>>> User started talking:", event);
-    //   setIsUserTalking(true);
-    // });
-    // avatar.current?.on(StreamingEvents.USER_STOP, (event) => {
-    //   console.log(">>>>> User stopped talking:", event);
-    //   setIsUserTalking(false);
-    // });
+
     try {
       const res = await avatar.current.createStartAvatar({
         quality: AvatarQuality.High,
         avatarName: avatarId,
-        knowledgeId: knowledgeId, // Or use a custom `knowledgeBase`.
+        knowledgeId: knowledgeId,
         voice: {
-          rate: 1.5, // 0.5 ~ 1.5
+          rate: 1.5,
           emotion: VoiceEmotion.EXCITED,
-          // elevenlabsSettings: {
-          //   stability: 1,
-          //   similarity_boost: 1,
-          //   style: 1,
-          //   use_speaker_boost: false,
-          // },
         },
         language: language,
         disableIdleTimeout: true,
       });
 
       setData(res);
-      // default to voice mode
-      // await avatar.current?.startVoiceChat({
-      //   useSilencePrompt: false
-      // });
-      // setChatMode("voice_mode");
       setChatMode("voice_mode"); // Define o modo como voice_mode
     } catch (error) {
       console.error("Error starting avatar session:", error);
@@ -130,31 +181,39 @@ export default function InteractiveAvatar() {
       setIsLoadingSession(false);
     }
   }
+
   async function handleSpeak() {
     setIsLoadingRepeat(true);
     if (!avatar.current) {
       setDebug("Avatar API not initialized");
-
       return;
     }
-    // speak({ text: text, task_type: TaskType.REPEAT })
-    await avatar.current.speak({ text: text, taskType: TaskType.REPEAT, taskMode: TaskMode.SYNC }).catch((e) => {
-      setDebug(e.message);
-    });
-    setIsLoadingRepeat(false);
+
+    try {
+      const geminiResponse = await sendToGemini(text);
+      await avatar.current.speak({
+        text: geminiResponse,
+        taskType: TaskType.REPEAT,
+        taskMode: TaskMode.SYNC,
+      });
+    } catch (error) {
+      console.error("Error communicating with Gemini:", error);
+      setDebug("Failed to communicate with Gemini");
+    } finally {
+      setIsLoadingRepeat(false);
+    }
   }
+
   async function handleInterrupt() {
     if (!avatar.current) {
       setDebug("Avatar API not initialized");
-
       return;
     }
-    await avatar.current
-      .interrupt()
-      .catch((e) => {
-        setDebug(e.message);
-      });
+    await avatar.current.interrupt().catch((e) => {
+      setDebug(e.message);
+    });
   }
+
   async function endSession() {
     await avatar.current?.stopAvatar();
     setStream(undefined);
@@ -165,9 +224,10 @@ export default function InteractiveAvatar() {
       return;
     }
     if (v === "text_mode") {
-      avatar.current?.closeVoiceChat();
-    } else {
-      await avatar.current?.startVoiceChat();
+      if (recognition) {
+        recognition.stop();
+        setIsListening(false);
+      }
     }
     setChatMode(v);
   });
@@ -225,7 +285,7 @@ export default function InteractiveAvatar() {
                   Interromper fala
                 </Button>
                 <Button
-                  className="bg-gradient-to-tr from-indigo-500 to-indigo-300  text-white rounded-lg"
+                  className="bg-gradient-to-tr from-indigo-500 to-indigo-300 text-white rounded-lg"
                   size="md"
                   variant="shadow"
                   onClick={endSession}
@@ -237,15 +297,6 @@ export default function InteractiveAvatar() {
           ) : !isLoadingSession ? (
             <div className="h-full justify-center items-center flex flex-col gap-8 w-[500px] self-center">
               <div className="flex flex-col gap-2 w-full">
-                {/* <p className="text-sm font-medium leading-none">
-                  Custom Knowledge ID (optional)
-                </p>
-                <Input
-                  placeholder="Enter a custom knowledge ID"
-                  value={knowledgeId}
-                  onChange={(e) => setKnowledgeId(e.target.value)}
-                /> */}
-                {/* Campo para a chave de API do HeyGen */}
                 <p className="text-sm font-medium leading-none">
                   Chave de API do HeyGen
                 </p>
@@ -254,7 +305,6 @@ export default function InteractiveAvatar() {
                   value={heygenApiKey}
                   onChange={(e) => setHeygenApiKey(e.target.value)}
                 />
-                {/* Campo para a chave de API do Gemini */}
                 <p className="text-sm font-medium leading-none">
                   Chave de API do Gemini
                 </p>
@@ -266,11 +316,6 @@ export default function InteractiveAvatar() {
                 <p className="text-sm font-medium leading-none">
                   Avatar Personalizado
                 </p>
-                {/* <Input
-                  placeholder="Enter a custom avatar ID"
-                  value={avatarId}
-                  onChange={(e) => setAvatarId(e.target.value)}
-                /> */}
                 <Select
                   placeholder="Selecione um avatar de exemplo"
                   size="md"
@@ -325,8 +370,7 @@ export default function InteractiveAvatar() {
               handleChangeChatMode(v);
             }}
           >
-            {/* <Tab key="text_mode" title="Text mode" /> */}
-            <Tab key="voice_mode" title="Modo conversação" />
+                       <Tab key="voice_mode" title="Modo conversação" />
           </Tabs>
           {chatMode === "text_mode" ? (
             <div className="w-full flex relative">
@@ -335,7 +379,7 @@ export default function InteractiveAvatar() {
                 input={text}
                 label="Chat"
                 loading={isLoadingRepeat}
-                placeholder="Type something for the avatar to respond"
+                placeholder="Digite algo para o avatar responder"
                 setInput={setText}
                 onSubmit={handleSpeak}
               />
@@ -346,12 +390,23 @@ export default function InteractiveAvatar() {
           ) : (
             <div className="w-full text-center">
               <Button
-                isDisabled={!isUserTalking}
+                isDisabled={!stream}
                 className="bg-gradient-to-tr from-red-500 to-red-900 text-white"
                 size="md"
                 variant="shadow"
+                onClick={() => {
+                  if (recognition) {
+                    if (isListening) {
+                      recognition.stop();
+                      setIsListening(false);
+                    } else {
+                      recognition.start();
+                      setIsListening(true);
+                    }
+                  }
+                }}
               >
-                {isUserTalking ? "Escutando" : "Aperte para falar"}
+                {isListening ? "Escutando..." : "Aperte para falar"}
               </Button>
             </div>
           )}
