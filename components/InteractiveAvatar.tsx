@@ -16,6 +16,7 @@ import {
   Chip,
   Tabs,
   Tab,
+  Textarea,
 } from "@nextui-org/react";
 import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, usePrevious } from "ahooks";
@@ -34,7 +35,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default function InteractiveAvatar() {
   const [heygenApiKey, setHeygenApiKey] = useState<string>("");
-  const [geminiApiKey, setGeminiApiKey] = useState<string>("");
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [isLoadingRepeat, setIsLoadingRepeat] = useState(false);
   const [stream, setStream] = useState<MediaStream>();
@@ -50,13 +50,15 @@ export default function InteractiveAvatar() {
   const [isUserTalking, setIsUserTalking] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [instrucaoSistema, setInstrucaoSistema] = useState<string>("");
 
   // Usamos useRef para armazenar o cliente Gemini
   const genAIRef = useRef<GoogleGenerativeAI | null>(null);
 
   // Função para configurar o cliente Gemini
   const setupGeminiClient = () => {
-    alert("Chave da API do Gemini:" + geminiApiKey);
+    const geminiApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+
     if (!geminiApiKey) {
       alert("Por favor, insira uma chave de API válida.");
       return false;
@@ -79,6 +81,7 @@ export default function InteractiveAvatar() {
 
     const model = genAIRef.current.getGenerativeModel({
       model: "learnlm-1.5-pro-experimental",
+      systemInstruction: instrucaoSistema,
     });
 
     const chatSession = model.startChat({
@@ -326,7 +329,7 @@ export default function InteractiveAvatar() {
               </div>
             </div>
           ) : !isLoadingSession ? (
-            <div className="h-full justify-center items-center flex flex-col gap-8 w-[500px] self-center">
+            <div className="h-full justify-center items-center flex flex-col gap-8 w-[700px] self-center">
               <div className="flex flex-col gap-2 w-full">
                 <p className="text-sm font-medium leading-none">
                   Chave de API do HeyGen
@@ -335,14 +338,6 @@ export default function InteractiveAvatar() {
                   placeholder="Insira sua chave de API do HeyGen"
                   value={heygenApiKey}
                   onChange={(e) => setHeygenApiKey(e.target.value)}
-                />
-                <p className="text-sm font-medium leading-none">
-                  Chave de API do Gemini
-                </p>
-                <Input
-                  placeholder="Insira sua chave de API do Gemini"
-                  value={geminiApiKey}
-                  onChange={(e) => setGeminiApiKey(e.target.value)}
                 />
                 <p className="text-sm font-medium leading-none">
                   Avatar Personalizado
@@ -363,6 +358,9 @@ export default function InteractiveAvatar() {
                     </SelectItem>
                   ))}
                 </Select>
+                <p className="text-sm font-medium leading-none">
+                  Selecione o idioma
+                </p>
                 <Select
                   label="Idioma"
                   placeholder="Idioma"
@@ -378,6 +376,15 @@ export default function InteractiveAvatar() {
                     </SelectItem>
                   ))}
                 </Select>
+                <p className="text-sm font-medium leading-none">
+                  Instrução de Sistema
+                </p>
+                <Textarea
+                  placeholder="Digite a instrução de sistema"
+                  value={instrucaoSistema}
+                  onChange={(e) => setInstrucaoSistema(e.target.value)}
+                  rows={50}
+                />
               </div>
               <Button
                 className="bg-gradient-to-tr from-red-500 to-red-900 w-full text-white"
