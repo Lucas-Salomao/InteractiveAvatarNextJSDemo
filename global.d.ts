@@ -9,16 +9,16 @@ interface SpeechRecognitionErrorEvent extends Event {
    }
 
 interface SpeechRecognition extends EventTarget {
-  start(): void;
-  stop(): void;
-  abort(): void;
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: Event) => void;
-  onend: () => void;
-}
+     start(): void;
+     stop(): void;
+     abort(): void;
+     lang: string;
+     continuous: boolean;
+     interimResults: boolean;
+     onresult: (event: SpeechRecognitionEvent) => void;
+     onerror: (event: SpeechRecognitionErrorEvent) => void;
+     onend: () => void;
+   }
 
 declare var SpeechRecognition: {
   prototype: SpeechRecognition;
