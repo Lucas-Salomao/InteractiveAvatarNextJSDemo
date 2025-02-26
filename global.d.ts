@@ -3,6 +3,11 @@ interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
 }
 
+interface SpeechRecognitionErrorEvent extends Event {
+     error: string;
+     message: string;
+   }
+
 interface SpeechRecognition extends EventTarget {
   start(): void;
   stop(): void;
