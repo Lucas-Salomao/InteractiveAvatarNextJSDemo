@@ -125,50 +125,49 @@ export default function InteractiveAvatar() {
     }
   }
 
-  // Configura o Web Speech API
   useEffect(() => {
-    if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
-      const SpeechRecognition = window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
-      recognitionInstance.lang = language;
+     if (typeof window !== "undefined" && "webkitSpeechRecognition" in window) {
+       const SpeechRecognition = window.webkitSpeechRecognition;
+       const recognitionInstance = new SpeechRecognition();
+       recognitionInstance.continuous = false;
+       recognitionInstance.interimResults = false;
+       recognitionInstance.lang = language;
 
-      recognitionInstance.onresult = async (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log("Transcribed text:", transcript);
+       recognitionInstance.onresult = async (event: SpeechRecognitionEvent) => {
+         const transcript = event.results[0][0].transcript;
+         console.log("Transcribed text:", transcript);
 
-        try {
-          if (!setupGeminiClient()) {
-            throw new Error("Gemini API Key não configurada.");
-          }
-          const geminiResponse = await sendToGemini(transcript);
-          await avatar.current?.speak({
-            text: geminiResponse,
-            taskType: TaskType.REPEAT,
-            taskMode: TaskMode.SYNC,
-          });
-        } catch (error) {
-          console.error("Error communicating with Gemini:", error);
-          setDebug("Failed to communicate with Gemini");
-        }
-      };
+         try {
+           if (!setupGeminiClient()) {
+             throw new Error("Gemini API Key não configurada.");
+           }
+           const geminiResponse = await sendToGemini(transcript);
+           await avatar.current?.speak({
+             text: geminiResponse,
+             taskType: TaskType.REPEAT,
+             taskMode: TaskMode.SYNC,
+           });
+         } catch (error) {
+           console.error("Error communicating with Gemini:", error);
+           setDebug("Failed to communicate with Gemini");
+         }
+       };
 
-      recognitionInstance.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        setDebug("Speech recognition error");
-      };
+       recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+         console.error("Speech recognition error:", event.error);
+         setDebug("Speech recognition error");
+       };
 
-      recognitionInstance.onend = () => {
-        setIsListening(false);
-      };
+       recognitionInstance.onend = () => {
+         setIsListening(false);
+       };
 
-      setRecognition(recognitionInstance);
-    } else {
-      console.error("Web Speech API not supported");
-      setDebug("Web Speech API not supported");
-    }
-  }, [language]);
+       setRecognition(recognitionInstance);
+     } else {
+       console.error("Web Speech API not supported");
+       setDebug("Web Speech API not supported");
+     }
+   }, [language]);
 
   async function startSession() {
     setIsLoadingSession(true);
