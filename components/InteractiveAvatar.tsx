@@ -17,6 +17,7 @@ import {
   Chip,
   Tabs,
   Tab,
+  Textarea,
 } from "@nextui-org/react";
 import { useEffect, useRef, useState } from "react";
 import { useMemoizedFn, usePrevious } from "ahooks";
@@ -32,7 +33,7 @@ export default function InteractiveAvatar() {
   const [debug, setDebug] = useState<string>();
   const [knowledgeId, setKnowledgeId] = useState<string>("");
   const [avatarId, setAvatarId] = useState<string>("");
-  const [language, setLanguage] = useState<string>('en');
+  const [language, setLanguage] = useState<string>('pt');
 
   const [data, setData] = useState<StartAvatarResponse>();
   const [text, setText] = useState<string>("");
@@ -40,6 +41,8 @@ export default function InteractiveAvatar() {
   const avatar = useRef<StreamingAvatar | null>(null);
   const [chatMode, setChatMode] = useState("text_mode");
   const [isUserTalking, setIsUserTalking] = useState(false);
+
+  const [instrucao, setInstrucao] = useState<string>("");
 
   async function fetchAccessToken() {
     try {
@@ -205,18 +208,18 @@ export default function InteractiveAvatar() {
               </video>
               <div className="flex flex-col gap-2 absolute bottom-3 right-3">
                 <Button
-                  className="bg-gradient-to-tr from-indigo-500 to-indigo-300 text-white rounded-lg"
+                  className="bg-gradient-to-tr from-red-500 to-red-900 text-white rounded-lg"
                   size="md"
                   variant="shadow"
-                  onClick={handleInterrupt}
+                  onPress={handleInterrupt}
                 >
                   Interrupt task
                 </Button>
                 <Button
-                  className="bg-gradient-to-tr from-indigo-500 to-indigo-300  text-white rounded-lg"
+                  className="bg-gradient-to-tr from-red-500 to-red-900  text-white rounded-lg"
                   size="md"
                   variant="shadow"
-                  onClick={endSession}
+                  onPress={endSession}
                 >
                   End session
                 </Button>
@@ -225,22 +228,22 @@ export default function InteractiveAvatar() {
           ) : !isLoadingSession ? (
             <div className="h-full justify-center items-center flex flex-col gap-8 w-[500px] self-center">
               <div className="flex flex-col gap-2 w-full">
-                <p className="text-sm font-medium leading-none">
+                {/* <p className="text-sm font-medium leading-none">
                   Custom Knowledge ID (optional)
                 </p>
                 <Input
                   placeholder="Enter a custom knowledge ID"
                   value={knowledgeId}
                   onChange={(e) => setKnowledgeId(e.target.value)}
-                />
+                /> */}
                 <p className="text-sm font-medium leading-none">
-                  Custom Avatar ID (optional)
+                  Avatar ID
                 </p>
-                <Input
+                {/* <Input
                   placeholder="Enter a custom avatar ID"
                   value={avatarId}
                   onChange={(e) => setAvatarId(e.target.value)}
-                />
+                /> */}
                 <Select
                   placeholder="Or select one from these example avatars"
                   size="md"
@@ -257,6 +260,9 @@ export default function InteractiveAvatar() {
                     </SelectItem>
                   ))}
                 </Select>
+                <p className="text-sm font-medium leading-none">
+                  Idioma
+                </p>
                 <Select
                   label="Select language"
                   placeholder="Select language"
@@ -272,12 +278,22 @@ export default function InteractiveAvatar() {
                     </SelectItem>
                   ))}
                 </Select>
+                <p className="text-sm font-medium leading-none">
+                  Instrução de Sistema
+                </p>
+                <Textarea
+                  placeholder="informe como o avatar irá se comportar."
+                  onChange={(e) => {
+                    setInstrucao(e.target.value);
+                  }}
+                >
+                </Textarea>
               </div>
               <Button
-                className="bg-gradient-to-tr from-indigo-500 to-indigo-300 w-full text-white"
+                className="bg-gradient-to-tr from-red-500 to-red-900 w-full text-white"
                 size="md"
                 variant="shadow"
-                onClick={startSession}
+                onPress={startSession}
               >
                 Start session
               </Button>
@@ -317,7 +333,7 @@ export default function InteractiveAvatar() {
             <div className="w-full text-center">
               <Button
                 isDisabled={!isUserTalking}
-                className="bg-gradient-to-tr from-indigo-500 to-indigo-300 text-white"
+                className="bg-gradient-to-tr from-red-500 to-red-900 text-white"
                 size="md"
                 variant="shadow"
               >
