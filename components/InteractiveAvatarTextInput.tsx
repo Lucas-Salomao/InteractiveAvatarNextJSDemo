@@ -47,7 +47,7 @@ export default function InteractiveAvatarTextInput({
               <button
                 type="submit"
                 className="focus:outline-none"
-                onClick={handleSubmit}
+                onPress={handleSubmit}
               >
                 <PaperPlaneRight
                   className={clsx(
