@@ -7,25 +7,25 @@ import {
   NavbarContent,
   NavbarItem,
 } from "@nextui-org/react";
-import { GithubIcon, HeyGenLogo } from "./Icons";
+import { GithubIcon, SenaiLogo } from "./Icons";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 export default function NavBar() {
   return (
     <Navbar className="w-full">
       <NavbarBrand>
-        <Link isExternal aria-label="HeyGen" href="https://app.heygen.com/">
-          <HeyGenLogo />
+        <Link isExternal aria-label="Senai-SP" href="https://sp.senai.br/">
+          <SenaiLogo />
         </Link>
-        <div className="bg-gradient-to-br from-sky-300 to-indigo-500 bg-clip-text ml-4">
+        <div className="bg-gradient-to-br from-red-500 to-red-900 bg-clip-text ml-4">
           <p className="text-xl font-semibold text-transparent">
-            HeyGen Interactive Avatar SDK NextJS Demo
+            Tutor Virtual SENAI São Paulo
           </p>
         </div>
       </NavbarBrand>
       <NavbarContent justify="center">
         <NavbarItem className="flex flex-row items-center gap-4">
-          <Link
+          {/* <Link
             isExternal
             color="foreground"
             href="https://labs.heygen.com/interactive-avatar"
@@ -61,7 +61,7 @@ export default function NavBar() {
           >
             <GithubIcon className="text-default-500" />
             SDK
-          </Link>
+          </Link> */}
           <ThemeSwitch />
         </NavbarItem>
       </NavbarContent>
